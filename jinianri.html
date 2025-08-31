@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Time of Love</title>
+  <!-- 引入 Google Fonts 字体 -->
+  <link href="https://fonts.googleapis.com/css2?family=Love+Ya+Like+A+Sister&display=swap" rel="stylesheet">
+  <style>
+    body {
+      overflow: hidden;
+      margin: 0;
+    }
+    h1 {
+      position: fixed;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      transform: translateY(-50%);
+      font-family: 'Love Ya Like A Sister', cursive;
+      font-size: 40px;
+      color: #c70012;
+      padding: 0 20px;
+    }
+    h1 span {
+      font-size: 20px;
+      display: block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="h1"></h1>
+  <canvas></canvas> <!-- canvas 画布 -->
+
+  <script>
+    const canvas = document.querySelector("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let ww, wh;
+    const MAX_HEARTS = 100; // 最多 100 个心形
+    const hearts = [];
+    let frameCount = 0;
+
+    function onResize() {
+      ww = window.innerWidth;
+      wh = window.innerHeight;
+
+      // 动态限制最大 Canvas 尺寸
+      if (ww > 1920) ww = 1920;
+      if (wh > 1080) wh = 1080;
+
+      canvas.width = ww;
+      canvas.height = wh;
+    }
+
+    function onMove(e) {
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      if (hearts.length < MAX_HEARTS) {
+        hearts.push(new Heart(x, y));
+      }
+    }
+
+    class Heart {
+      constructor(x, y) {
+        this.x = x || Math.random() * ww;
+        this.y = y || Math.random() * wh;
+        this.size = Math.random() * 2 + 1;
+        this.speedX = (Math.random() + 0.2 - 0.6) * 8;
+        this.speedY = (Math.random() + 0.2 - 0.6) * 8;
+        this.speedSize = Math.random() * 0.05 + 0.01;
+
+        // 预先计算心形路径
+        this.vertices = [];
+        for (let i = 0; i < 100; i++) {
+          const step = (i / 100 - 0.5) * Math.PI * 2;
+          this.vertices.push({
+            x: 15 * Math.pow(Math.sin(step), 3),
+            y: -(13 * Math.cos(step) - 5 * Math.cos(2 * step) - 2 * Math.cos(3 * step) - Math.cos(4 * step))
+          });
+        }
+      }
+
+      draw() {
+        this.size -= this.speedSize;
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.scale(this.size, this.size);
+
+        ctx.beginPath();
+        for (let { x, y } of this.vertices) {
+          ctx.lineTo(x, y);
+        }
+
+        ctx.fillStyle = "red"; // 固定颜色，提升性能
+        ctx.fill();
+        ctx.closePath();
+
+        ctx.restore();
+      }
+    }
+
+    function render() {
+      requestAnimationFrame(render);
+
+      if (frameCount % 2 === 0) { // 每两帧执行一次（30fps）
+        // 清理失效粒子
+        for (let i = hearts.length - 1; i >= 0; i--) {
+          if (hearts[i].size <= 0) {
+            hearts.splice(i, 1);
+          }
+        }
+
+        // 添加新粒子
+        if (hearts.length < MAX_HEARTS) {
+          hearts.push(new Heart());
+        }
+
+        // 清屏
+        ctx.clearRect(0, 0, ww, wh);
+
+        // 绘制所有粒子
+        for (let heart of hearts) {
+          heart.draw();
+        }
+      }
+      frameCount++;
+    }
+
+    onResize();
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onMove);
+    window.addEventListener("resize", onResize);
+    requestAnimationFrame(render);
+
+    window.onload = function starttime() {
+      time(document.getElementById("h1"), "2022/11/7");
+      setTimeout(starttime, 1000);
+    };
+
+    function time(obj, startDateStr) {
+      const now = new Date().getTime();
+      const start = new Date(startDateStr).getTime();
+      const msec = now - start;
+
+      const time = msec / 1000;
+      const day = Math.floor(time / 86400);
+      const hour = Math.floor((time % 86400) / 3600);
+      const minute = Math.floor((time % 3600) / 60);
+      const second = Math.floor(time % 60);
+
+      obj.innerHTML =
+        "宝贝<br>我们已经认识：<br>" +
+        `${day}天${hour}小时${minute}分${second}秒` + "了<br><span>世界再大，我的目光也只想为你停留<br>与你相遇的每个瞬间，都让我确信这就是心动<br>我笨拙地爱着，只愿能成为你疲惫时的港湾<br>未来太远，我只想牵着你的手，走好每一个明天</span>";
+    }
+  </script>
+</body>
+</html>
